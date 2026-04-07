@@ -92,7 +92,7 @@ def main() -> None:
     app = Application.builder().token(token).build()
 
     # /login conversation
-  login_conv = ConversationHandler(
+        login_conv = ConversationHandler(
         entry_points=[CommandHandler("login", login_start)],
         states={
             AWAIT_EMAIL: [
