@@ -58,11 +58,9 @@ os.makedirs(_LOG_DIR, exist_ok=True)
 
 _formatter = logging.Formatter(config.LOG_FORMAT)
 
-# Console handler
 _console_handler = logging.StreamHandler()
 _console_handler.setFormatter(_formatter)
 
-# File handler – new file per startup: bot_YYYYMMDD_HHMMSS.log
 _log_filename = f"bot_{_dt.now().strftime('%Y%m%d_%H%M%S')}.log"
 _file_handler = logging.FileHandler(
     os.path.join(_LOG_DIR, _log_filename),
@@ -92,7 +90,7 @@ def main() -> None:
     app = Application.builder().token(token).build()
 
     # /login conversation
-        login_conv = ConversationHandler(
+    login_conv = ConversationHandler(
         entry_points=[CommandHandler("login", login_start)],
         states={
             AWAIT_EMAIL: [
@@ -121,7 +119,7 @@ def main() -> None:
         },
         fallbacks=[CommandHandler("cancel", cancel_2fa)],
         allow_reentry=True,
-        conversation_timeout=120,  # 2 minutes to enter 2FA code
+        conversation_timeout=120,
     )
 
     app.add_handler(CommandHandler("start", start))
@@ -133,7 +131,6 @@ def main() -> None:
     app.add_handler(CommandHandler("get_link", get_link))
     app.add_handler(CommandHandler("status", status))
 
-    # Periodic job: purge expired sessions every 5 minutes
     app.job_queue.run_repeating(
         session_cleanup_job, interval=300, first=300,
     )
