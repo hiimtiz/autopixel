@@ -31,6 +31,7 @@ from handlers.bot_handlers import (
     AWAIT_2FA_CODE,
     AWAIT_EMAIL,
     AWAIT_PASSWORD,
+    AWAIT_TOTP_SECRET,
     cancel_2fa,
     check_offer,
     get_link,
@@ -40,6 +41,7 @@ from handlers.bot_handlers import (
     login_cancel,
     login_email,
     login_password,
+    login_totp_secret,
     login_start,
     logout,
     offer_timeout,
@@ -90,7 +92,7 @@ def main() -> None:
     app = Application.builder().token(token).build()
 
     # /login conversation
-    login_conv = ConversationHandler(
+  login_conv = ConversationHandler(
         entry_points=[CommandHandler("login", login_start)],
         states={
             AWAIT_EMAIL: [
@@ -98,6 +100,9 @@ def main() -> None:
             ],
             AWAIT_PASSWORD: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, login_password)
+            ],
+            AWAIT_TOTP_SECRET: [
+                MessageHandler(filters.TEXT, login_totp_secret)
             ],
         },
         fallbacks=[CommandHandler("cancel", login_cancel)],
