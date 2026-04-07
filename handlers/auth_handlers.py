@@ -15,7 +15,7 @@ from core.session_manager import (
 )
 from services.device_simulator import create_device_profile
 
-from handlers.states import AWAIT_EMAIL, AWAIT_PASSWORD
+from handlers.states import AWAIT_EMAIL, AWAIT_PASSWORD, AWAIT_TOTP_SECRET
 from handlers.ui import (
     main_menu_keyboard,
     quick_actions_inline_keyboard,
@@ -107,26 +107,41 @@ async def login_email(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
     context.user_data["pending_email"] = email
     await update.message.reply_text(
-        f"✅ Email received: `{email}`\n\n🔒 Now send your password.\n"
-        "Optional format: `password|totp_secret` for auto-2FA.",
+        f"✅ Email received: `{email}`\n\n🔒 Now send your *password*.",
         parse_mode="Markdown",
     )
     return AWAIT_PASSWORD
 
 
 async def login_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Store credentials, generate a new device profile, and finish."""
-    chat_id = update.effective_chat.id
+    """Store password and ask for 2FA secret."""
     raw_input = update.message.text.strip()
-    email = context.user_data.pop("pending_email", "")
+    context.user_data["pending_password"] = raw_input
 
-    if "|" in raw_input:
-        password, totp_secret = raw_input.split("|", 1)
-        password = password.strip()
-        totp_secret = totp_secret.strip()
-    else:
-        password = raw_input
+    try:
+        await update.message.delete()
+    except Exception:
+        pass
+
+    await update.message.reply_text(
+        "🔑 Now send your *TOTP secret* for auto-2FA.\n"
+        "_(Send /skip if you don't use 2FA or prefer to enter code manually)_",
+        parse_mode="Markdown",
+    )
+    return AWAIT_TOTP_SECRET
+
+
+async def login_totp_secret(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Store TOTP secret (or skip), generate device profile, finish."""
+    chat_id = update.effective_chat.id
+    text = update.message.text.strip()
+    email = context.user_data.pop("pending_email", "")
+    password = context.user_data.pop("pending_password", "")
+
+    if text.lower() == "/skip":
         totp_secret = None
+    else:
+        totp_secret = text
 
     session = get_session(chat_id)
     session["email"] = bytearray(email.encode("utf-8"))
@@ -136,11 +151,6 @@ async def login_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     session["device"] = create_device_profile()
     session["offer_link"] = None
     session["created_at"] = time.time()
-
-    try:
-        await update.message.delete()
-    except Exception:
-        pass
 
     await context.bot.send_message(
         chat_id=chat_id,
