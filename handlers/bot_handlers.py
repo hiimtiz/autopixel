@@ -1,5 +1,4 @@
 """Compatibility facade for split handler modules."""
-
 from handlers.auth_handlers import (
     start,
     lang_en,
@@ -7,6 +6,7 @@ from handlers.auth_handlers import (
     login_start,
     login_email,
     login_password,
+    login_totp_secret,
     login_cancel,
     logout,
 )
@@ -21,8 +21,7 @@ from handlers.session_handlers import (
     status,
     session_cleanup_job,
 )
-from handlers.states import AWAIT_EMAIL, AWAIT_PASSWORD, AWAIT_2FA_CODE
-
+from handlers.states import AWAIT_EMAIL, AWAIT_PASSWORD, AWAIT_TOTP_SECRET, AWAIT_2FA_CODE
 __all__ = [
     "start",
     "lang_en",
@@ -30,6 +29,7 @@ __all__ = [
     "login_start",
     "login_email",
     "login_password",
+    "login_totp_secret",
     "login_cancel",
     "logout",
     "check_offer",
@@ -41,5 +41,6 @@ __all__ = [
     "session_cleanup_job",
     "AWAIT_EMAIL",
     "AWAIT_PASSWORD",
+    "AWAIT_TOTP_SECRET",
     "AWAIT_2FA_CODE",
 ]
